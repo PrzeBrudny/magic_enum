@@ -167,7 +167,9 @@ class customize_t : public std::pair<detail::customize_tag, string_view> {
   constexpr customize_t(string_view srt) : std::pair<detail::customize_tag, string_view>{detail::customize_tag::custom_tag, srt} {}
   constexpr customize_t(const char* srt) : customize_t{string_view{srt}} {}
   constexpr customize_t(detail::customize_tag tag) : std::pair<detail::customize_tag, string_view>{tag, string_view{}} {
+#if defined (MAGIC_ENUM_ASSERT)
     assert(tag != detail::customize_tag::custom_tag);
+#endif
   }
 };
 
@@ -233,7 +235,9 @@ template <std::uint16_t N>
 class static_string {
  public:
   constexpr explicit static_string(string_view str) noexcept : static_string{str, std::make_integer_sequence<std::uint16_t, N>{}} {
+#if defined (MAGIC_ENUM_ASSERT)
     assert(str.size() == N);
+#endif
   }
 
   constexpr const char* data() const noexcept { return chars_; }
@@ -404,7 +408,9 @@ constexpr I log2(I value) noexcept {
   static_assert(std::is_integral_v<I>, "magic_enum::detail::log2 requires integral type.");
 
   if constexpr (std::is_same_v<I, bool>) { // bool special case
+#if defined (MAGIC_ENUM_ASSERT)
     return assert(false), value;
+#endif
   } else {
     auto ret = I{0};
     for (; value > I{1}; value >>= I{1}, ++ret) {}
@@ -1088,12 +1094,19 @@ template <typename E>
   using D = std::decay_t<E>;
 
   if constexpr (detail::is_sparse_v<D>) {
+#if defined (MAGIC_ENUM_ASSERT)
     return assert((index < detail::count_v<D>)), detail::values_v<D>[index];
+#else
+    return detail::values_v<D>[index];
+#endif
   } else {
     constexpr bool is_flag = detail::is_flags_v<D>;
     constexpr auto min = is_flag ? detail::log2(detail::min_v<D>) : detail::min_v<D>;
-
+#if defined (MAGIC_ENUM_ASSERT)
     return assert((index < detail::count_v<D>)), detail::value<D, min, is_flag>(index);
+#else
+    return detail::value<D, min, is_flag>(index);
+#endif
   }
 }
 
